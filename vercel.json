@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python -m ai_core.risk_model train",
+  "functions": {
+    "app.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{tests/**,notebooks/**,docs/**,wokwi/**,templates/**,pet_detection.py,dashboard_server.py}"
+    }
+  }
+}

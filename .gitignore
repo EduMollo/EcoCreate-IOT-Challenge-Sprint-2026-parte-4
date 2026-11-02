@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Segredos
+.env
+
+# Banco local e artefatos gerados em runtime
+clyvo.db
+clyvo.db-wal
+clyvo.db-shm
+logs/
+screenshots/
+
+# Pesos YOLO (baixar conforme README)
+models/*.weights
+models/*.cfg
+models/*.names
+
+# Config local do Claude Code
+.claude/
+
+.venv/
+.env.*
+!.env.example
+.pytest_cache/
+
+# Regenerar no ambiente de destino: evita incompatibilidade entre versões sklearn.
+ai_core/trained/*.joblib

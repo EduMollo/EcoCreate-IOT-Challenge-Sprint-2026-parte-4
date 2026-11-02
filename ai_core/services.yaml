@@ -1,0 +1,87 @@
+# Catálogo de serviços da clínica — base do recomendador content-based (C4)
+# tags: vocabulário compartilhado com o contexto do pet (ver recommender.py)
+
+services:
+  - code: CONSULTA_CLINICA
+    name: Consulta clínica presencial
+    description: Avaliação completa com médico-veterinário, exame físico e anamnese.
+    price_brl: 180
+    species: [dog, cat]
+    tags: [telemetria, risco_alto, risco_critico, febre, cardiaco, respiratorio, atividade, checkup, adulto, senior, filhote]
+
+  - code: TELECONSULTA
+    name: Teleconsulta de triagem
+    description: Conversa por vídeo com veterinário para avaliar sinais e decidir próximos passos.
+    price_brl: 90
+    species: [dog, cat]
+    tags: [telemetria, risco_moderado, atividade, engajamento_baixo, conveniencia]
+
+  - code: HEMOGRAMA
+    name: Exames laboratoriais (hemograma + bioquímico)
+    description: Painel sanguíneo para investigar alterações sistêmicas.
+    price_brl: 220
+    species: [dog, cat]
+    tags: [risco_alto, risco_critico, febre, senior, checkup]
+
+  - code: CARDIO
+    name: Avaliação cardiológica (ECG + ausculta)
+    description: Investigação de alterações de ritmo e frequência cardíaca.
+    price_brl: 260
+    species: [dog, cat]
+    tags: [cardiaco, senior, risco_alto, risco_critico]
+
+  - code: RESPIRATORIO
+    name: Avaliação respiratória (oximetria + raio-X de tórax)
+    description: Investigação de queda de saturação e esforço respiratório.
+    price_brl: 240
+    species: [dog, cat]
+    tags: [respiratorio, risco_alto, risco_critico]
+
+  - code: VACINACAO
+    name: Vacinação (dose de reforço)
+    description: Aplicação de vacina conforme protocolo da espécie.
+    price_brl: 95
+    species: [dog, cat]
+    tags: [vacina, rotina]
+
+  - code: VERMIFUGACAO
+    name: Vermifugação
+    description: Vermífugo de amplo espectro conforme peso e espécie.
+    price_brl: 45
+    species: [dog, cat]
+    tags: [vermifugo, rotina]
+
+  - code: CHECKUP_SENIOR
+    name: Check-up sênior (geriátrico)
+    description: Pacote semestral para pets 7+ com exames e avaliação articular.
+    price_brl: 390
+    species: [dog, cat]
+    tags: [senior, checkup, rotina, atividade]
+
+  - code: CHECKUP_ROTINA
+    name: Check-up anual de rotina
+    description: Consulta preventiva anual com atualização de carteirinha.
+    price_brl: 160
+    species: [dog, cat]
+    tags: [adulto, checkup, rotina, vacina]
+
+  - code: RETORNO_POS
+    name: Retorno pós-procedimento
+    description: Reavaliação após cirurgia ou procedimento.
+    price_brl: 0
+    species: [dog, cat]
+    tags: [pos_procedimento]
+
+  - code: ADESAO_MED
+    name: Programa de adesão medicamentosa
+    description: Lembretes no canal preferido + entrega da medicação em casa.
+    price_brl: 30
+    species: [dog, cat]
+    tags: [medicamento, engajamento_baixo, conveniencia]
+
+  - code: NUTRICAO
+    name: Consulta nutricional
+    description: Plano alimentar e controle de peso.
+    price_brl: 150
+    species: [dog, cat]
+    tags: [atividade, peso, senior, adulto]

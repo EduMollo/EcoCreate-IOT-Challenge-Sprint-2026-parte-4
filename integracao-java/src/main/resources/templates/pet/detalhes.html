@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragmentos/layout :: layout(~{::title}, ~{::section})}">
+<head>
+	<title th:text="${pet.nome} + ' — ClyvoVet'">Pet — ClyvoVet</title>
+</head>
+<body>
+<section>
+	<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+		<div>
+			<h1 class="h3 mb-0" th:text="${pet.nome}">Pet</h1>
+			<span class="text-secondary" th:text="${pet.especie.descricao + ' · ' + pet.raca + ' · ' + pet.idadeEmAnos + ' ano(s)'}">Espécie</span>
+		</div>
+		<div class="d-flex gap-2">
+			<a th:href="@{/pets/{id}/copilot(id=${pet.id})}" class="btn btn-outline-primary"><i class="bi bi-stars me-1"></i>CLYVO Copilot</a>
+			<a th:href="@{/pets/{id}/dashboard(id=${pet.id})}" class="btn btn-success">
+				<i class="bi bi-activity me-1"></i>Dashboard de saúde
+			</a>
+			<a th:href="@{/pets/{id}/historico(id=${pet.id})}" class="btn btn-outline-secondary">
+				<i class="bi bi-clock-history me-1"></i>Linha do tempo
+			</a>
+			<a th:if="${usuarioLogado.equipeClinica}" th:href="@{/consultas/nova(idPet=${pet.id})}" class="btn btn-primary">
+				<i class="bi bi-calendar-plus me-1"></i>Agendar consulta
+			</a>
+			<a th:if="${usuarioLogado.equipeClinica}" th:href="@{/pets/{id}/editar(id=${pet.id})}" class="btn btn-outline-primary">
+				<i class="bi bi-pencil me-1"></i>Editar
+			</a>
+		</div>
+	</div>
+
+	<div class="row g-3">
+		<div class="col-lg-4">
+			<div class="card shadow-sm h-100">
+				<div class="card-header bg-body"><strong>Ficha</strong></div>
+				<dl class="row card-body mb-0">
+					<dt class="col-5">Tutor</dt><dd class="col-7" th:text="${pet.tutor.nome}">Tutor</dd>
+					<dt class="col-5">Contato</dt><dd class="col-7" th:text="${pet.tutor.telefone}">Telefone</dd>
+					<dt class="col-5">Clínica</dt><dd class="col-7" th:text="${pet.clinicaPrincipal != null} ? ${pet.clinicaPrincipal.nome} : '—'">Clínica</dd>
+					<dt class="col-5">Nascimento</dt><dd class="col-7" th:text="${#temporals.format(pet.dataNascimento, 'dd/MM/yyyy')}">Data</dd>
+					<dt class="col-5">Peso</dt><dd class="col-7" th:text="${pet.pesoKg != null} ? ${pet.pesoKg + ' kg'} : '—'">Peso</dd>
+					<dt class="col-5">Sexo</dt><dd class="col-7" th:text="${pet.sexo != null} ? ${pet.sexo.descricao} : '—'">Sexo</dd>
+					<dt class="col-5">Castrado</dt><dd class="col-7" th:text="${pet.castrado == null} ? '—' : (${pet.castrado} ? 'Sim' : 'Não')">Castrado</dd>
+					<dt class="col-5">Microchip</dt><dd class="col-7" th:text="${pet.microchip} ?: '—'">Microchip</dd>
+					<dt class="col-5">Observações</dt><dd class="col-7" th:text="${pet.observacoes} ?: '—'">Obs</dd>
+				</dl>
+			</div>
+		</div>
+
+		<div class="col-lg-8">
+			<div class="card shadow-sm h-100">
+				<div class="card-header bg-body d-flex justify-content-between align-items-center">
+					<strong><i class="bi bi-calendar-check me-1"></i>Consultas</strong>
+					<span class="badge bg-primary" th:text="${#lists.size(consultas)}">0</span>
+				</div>
+				<div class="card-body p-0">
+					<p class="text-secondary p-3 mb-0" th:if="${#lists.isEmpty(consultas)}">Nenhuma consulta registrada.</p>
+					<table class="table table-hover mb-0" th:unless="${#lists.isEmpty(consultas)}">
+						<thead class="table-light"><tr><th>Data</th><th>Tipo</th><th>Clínica</th><th>Veterinário</th><th>Status</th><th></th></tr></thead>
+						<tbody>
+							<tr th:each="consulta : ${consultas}">
+								<td th:text="${#temporals.format(consulta.dataConsulta, 'dd/MM/yyyy')}">Data</td>
+								<td th:text="${consulta.tipoConsulta.descricao}">Tipo</td>
+								<td th:text="${consulta.clinica.nome}">Clínica</td>
+								<td th:text="${consulta.veterinario}">Vet</td>
+								<td><span th:replace="~{consulta/fragmentos :: status(${consulta.status})}"></span></td>
+								<td class="text-end">
+									<a th:if="${usuarioLogado.equipeClinica}" th:href="@{/consultas/{id}(id=${consulta.id})}" class="btn btn-sm btn-outline-primary">Abrir</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+</body>
+</html>

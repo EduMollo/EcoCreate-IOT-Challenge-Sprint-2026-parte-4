@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragmentos/layout :: layout(~{::title}, ~{::section})}">
+<head><title>CLYVO Copilot</title></head><body><section>
+<div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="h3">CLYVO Copilot</h1><p class="text-secondary mb-0" th:text="${pet.nome} + ' • acompanhamento personalizado'">Pet</p></div><a class="btn btn-outline-secondary" th:href="@{/pets/{id}(id=${pet.id})}">Voltar ao pet</a></div>
+<div class="alert alert-info">Demonstração acadêmica com sensores simulados. As mensagens dependem de revisão da equipe veterinária.</div>
+<div th:if="${usuarioLogado.equipeClinica}" class="card mb-4"><div class="card-body">
+<h2 class="h5">Acompanhar e analisar</h2>
+<p th:unless="${configurado}" class="text-warning">O serviço de análise está aguardando configuração.</p>
+<div class="d-flex gap-3 flex-wrap">
+<form method="post" th:action="@{/pets/{id}/copilot/simular(id=${pet.id})}" class="d-flex gap-2"><label class="visually-hidden" for="cenario">Cenário simulado</label><select name="cenario" id="cenario" class="form-select"><option value="normal">Estável</option><option value="fever">Temperatura em elevação</option><option value="hypoxia">Queda de oxigenação</option><option value="lethargy">Queda de atividade</option><option value="cold_start">Histórico inicial</option></select><button class="btn btn-outline-primary text-nowrap">Simular sensores</button></form>
+<form method="post" th:action="@{/pets/{id}/copilot/analisar(id=${pet.id})}"><button class="btn btn-primary" th:disabled="${!configurado}">Analisar com IA</button></form></div>
+<p class="small text-secondary mt-3 mb-0">A simulação salva uma nova janela de leituras. A análise usa o cadastro e o histórico deste pet.</p>
+</div></div>
+<details th:if="${usuarioLogado.equipeClinica and !#lists.isEmpty(leituras)}" class="card mb-4"><summary class="card-header">Últimas 10 leituras simuladas</summary><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Data e hora UTC</th><th>Temperatura °C</th><th>FC bpm</th><th>SpO₂ %</th><th>Atividade 0–1</th></tr></thead><tbody><tr th:each="leitura : ${leituras}"><td th:text="${leitura.ts}"></td><td th:text="${#numbers.formatDecimal(leitura.temperature_c,1,2)}"></td><td th:text="${#numbers.formatDecimal(leitura.heart_rate_bpm,1,0)}"></td><td th:text="${#numbers.formatDecimal(leitura.spo2_pct,1,2)}"></td><td th:text="${#numbers.formatDecimal(leitura.activity_score,1,2)}"></td></tr></tbody></table></div></details>
+<p th:if="${#lists.isEmpty(insights)}" class="text-secondary">Nenhuma análise disponível por enquanto.</p>
+<article th:each="insight : ${insights}" class="card mb-4" th:with="r=${insight.resultado}"><div class="card-body">
+<div class="d-flex justify-content-between flex-wrap gap-2"><h2 class="h5">Acompanhamento do pet</h2><span class="badge" th:classappend="${insight.aprovado} ? 'bg-success' : 'bg-secondary'" th:text="${insight.aprovado} ? 'Revisada pela equipe' : 'Aguardando revisão'">Status</span></div>
+<p class="small text-secondary" th:text="${r.ts}">Data</p>
+<div th:if="${usuarioLogado.equipeClinica}">
+<div class="row g-3 mb-3"><div class="col-md-4"><div class="border rounded p-3"><div class="small text-secondary">Score do modelo</div><strong th:text="${r.risk.risk_score} + '/100 • ' + ${r.risk.risk_level}">Score</strong></div></div><div class="col-md-4"><div class="border rounded p-3"><div class="small text-secondary">Prioridade da ação</div><strong th:classappend="${r.priority == 1} ? 'text-danger' : ''" th:text="${r.priority_label}">Prioridade</strong></div></div><div class="col-md-4"><div class="border rounded p-3"><div class="small text-secondary">Redação</div><strong th:text="${r.llm_mode == 'template'} ? 'Template de contingência' : ${r.llm_mode}">Modo</strong></div></div></div>
+<p class="text-warning small" th:if="${r.llm_error}" th:text="${r.llm_error}">Contingência</p>
+<p class="text-warning small" th:each="warning : ${r.warnings}" th:text="${warning}">Aviso</p>
+<h3 class="h6">Fatores da análise</h3><ul><li th:each="factor : ${r.risk.top_factors}" th:text="${factor.label} + ': ' + ${factor.value_text}">Fator</li></ul>
+<h3 class="h6">Ações sugeridas</h3><ul><li th:each="action : ${r.actions}"><strong th:text="${action.priority_label} + ' — ' + ${action.title}">Ação</strong><span class="d-block small text-secondary" th:text="${action.reason}">Motivo</span></li></ul>
+<details class="mb-3"><summary>Resumo para o veterinário</summary><p style="white-space:pre-wrap" th:text="${r.vet_briefing}">Resumo</p></details>
+<details class="mb-3"><summary>Fontes e rastreabilidade</summary><p th:text="${r.model_version}">Modelo</p><p th:text="${r.rag_used} ? 'Fontes utilizadas na geração' : 'Recuperação sem geração fundamentada: template'">RAG</p><ul><li th:each="source : ${r.rag_sources}" th:text="${source}">Fonte</li></ul><p th:text="'Engajamento: ' + ${r.tutor_profile.engagement} + ' • eventos: ' + ${r.tutor_profile.events_total}">IoB</p></details>
+</div>
+<h3 class="h6">Mensagem ao tutor</h3><div class="bg-body-tertiary border rounded p-3 mb-3" style="white-space:pre-wrap" th:text="${r.tutor_message}">Mensagem</div>
+<form th:if="${usuarioLogado.equipeClinica and !insight.aprovado}" method="post" th:action="@{/pets/{petId}/copilot/{id}/aprovar(petId=${pet.id},id=${insight.id})}"><button class="btn btn-success">Aprovar e disponibilizar no portal</button></form>
+<form th:if="${usuarioLogado.tutor and insight.aprovado}" method="post" th:action="@{/pets/{petId}/copilot/{id}/ler(petId=${pet.id},id=${insight.id})}"><button class="btn btn-outline-success">Confirmar leitura</button></form>
+</div></article>
+</section></body></html>

@@ -1,0 +1,50 @@
+# Protocolos clínicos declarativos — motor de regras (C3)
+# Regra sempre vence o modelo: o que está aqui entra na fila
+# independentemente do risk_score.
+
+vaccines:
+  due_soon_days: 15
+  protocols:
+    dog:
+      - code: POLIVALENTE
+        name: Polivalente (V8/V10)
+        match: [v8, v10, polivalente]
+        interval_days: 365
+      - code: ANTIRRABICA
+        name: Antirrábica
+        match: [antirr, raiva]
+        interval_days: 365
+    cat:
+      - code: POLIVALENTE
+        name: Polivalente felina (V4/V5)
+        match: [v4, v5, polivalente, quadrupla, quádrupla]
+        interval_days: 365
+      - code: ANTIRRABICA
+        name: Antirrábica
+        match: [antirr, raiva]
+        interval_days: 365
+
+deworming:
+  match: [vermifugo, vermífugo, vermifug]
+  interval_days: 90
+
+checkup:
+  senior_age_years: 7
+  adult_interval_days: 365
+  senior_interval_days: 180
+  puppy_interval_days: 60
+
+medication:
+  min_adherence_pct: 80
+  lookback_days: 45
+
+post_procedure:
+  warn_days_before: 3
+
+telemetry:
+  # Limites absolutos de segurança — herdados do Sprint 2 (_check_alerts).
+  # Agora são a ÚLTIMA linha de defesa, não o único critério.
+  dog: { temp: [37.5, 39.2], hr: [60, 140], spo2_min: 95 }
+  cat: { temp: [37.8, 39.2], hr: [120, 220], spo2_min: 95 }
+  # Desvio sustentado do baseline individual que dispara avaliação (em σ)
+  drift_z: 2.5

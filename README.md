@@ -20,6 +20,8 @@ Implementação local em validação. Não declarar entrega concluída antes de 
 | Redação | Gemini ou Ollama; Claude preservado como opção configurável |
 | Contingência | Template explicitamente identificado, sem alegar geração por LLM |
 
+Os arquivos novos e alterados da integração Java estão em [`integracao-java/`](integracao-java/LEIA-ME.md), para aplicação no projeto Java existente. Essa pasta não é um projeto independente.
+
 ## Executar
 
 Recomendado: Python 3.12 e Java 17 ou superior. Em PowerShell, execute `./iniciar.ps1`. O script cria o ambiente, instala dependências, retreina, roda os testes e inicia a API em `http://127.0.0.1:5001`.

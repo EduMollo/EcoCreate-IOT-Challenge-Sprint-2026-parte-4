@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CLYVO VET — Dashboard + Copilot</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --accent: #00b4ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --orange: #f0883e;
+      --purple: #a371f7;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    header {
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+    }
+    header h1 { font-size: 1.2rem; color: var(--accent); letter-spacing: 1px; }
+    header span.sub { font-size: 0.8rem; color: var(--muted); }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    #status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+    #status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+    main { padding: 24px 32px; display: grid; gap: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .panel, .chart-section, .alerts-section, .pet-info {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+    }
+    .panel h2, .chart-section h2, .alerts-section h2 {
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+    .badge.claude { border-color: var(--purple); color: var(--purple); }
+    .badge.ok { border-color: var(--green); color: var(--green); }
+    .badge.warn { border-color: var(--yellow); color: var(--yellow); }
+
+    /* Cards de métricas (Sprint 2) */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+    .card.alert::before { background: var(--red); }
+    .card-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .card-value { font-size: 2rem; font-weight: 700; color: var(--text); margin: 8px 0 4px; }
+    .card-unit  { font-size: 0.75rem; color: var(--muted); }
+    .card-icon  { position: absolute; right: 16px; top: 16px; font-size: 1.6rem; opacity: 0.15; }
+    .card-base  { font-size: 0.68rem; color: var(--muted); margin-top: 6px; }
+
+    canvas { width: 100% !important; }
+
+    /* Log de alertas (Sprint 2) */
+    #alert-list { list-style: none; }
+    #alert-list li { padding: 8px 12px; border-left: 3px solid var(--red); background: rgba(248,81,73,0.07); border-radius: 4px; font-size: 0.82rem; margin-bottom: 6px; color: #ff8080; }
+    #alert-list li.ok { border-left-color: var(--green); background: rgba(63,185,80,0.07); color: #7ee787; }
+
+    /* Info do pet */
+    .pet-info { display: flex; align-items: center; gap: 20px; }
+    .pet-avatar { width: 64px; height: 64px; background: linear-gradient(135deg, #0d2137, #003c6e); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .pet-details h3 { font-size: 1.1rem; color: var(--text); }
+    .pet-details p  { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    #last-update { font-size: 0.72rem; color: var(--muted); margin-left: auto; text-align: right; }
+
+    /* Copilot — risco */
+    .risk-head { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .risk-score { font-size: 3.2rem; font-weight: 800; line-height: 1; }
+    .risk-score small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+    .level { padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .level.baixo    { background: rgba(63,185,80,.15);  color: var(--green); }
+    .level.moderado { background: rgba(210,153,34,.15); color: var(--yellow); }
+    .level.alto     { background: rgba(240,136,62,.15); color: var(--orange); }
+    .level.critico  { background: rgba(248,81,73,.18);  color: var(--red); }
+    .kv { font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 12px; }
+    .bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .bar > span { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+    .bar.anom > span { background: var(--purple); }
+    ul.plain { list-style: none; }
+    .factors li { font-size: 0.8rem; padding: 6px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; gap: 12px; }
+    .factors li b { color: var(--text); font-weight: 600; white-space: nowrap; }
+
+    /* Copilot — ações e serviços */
+    .actions li { padding: 8px 10px; border-left: 3px solid var(--muted); background: rgba(255,255,255,.02); border-radius: 4px; margin-bottom: 6px; font-size: 0.82rem; }
+    .actions li.p1 { border-left-color: var(--red); }
+    .actions li.p2 { border-left-color: var(--orange); }
+    .actions li.p3 { border-left-color: var(--yellow); }
+    .actions li.p4 { border-left-color: var(--green); }
+    .actions li small { display: block; color: var(--muted); margin-top: 2px; font-size: 0.72rem; }
+    .chip { font-size: 0.64rem; padding: 1px 6px; border-radius: 4px; margin-right: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .chip.p1 { background: rgba(248,81,73,.2); color: var(--red); }
+    .chip.p2 { background: rgba(240,136,62,.2); color: var(--orange); }
+    .chip.p3 { background: rgba(210,153,34,.2); color: var(--yellow); }
+    .chip.p4 { background: rgba(63,185,80,.2); color: var(--green); }
+    .chip.src { background: #21262d; color: var(--muted); }
+    .services li { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8rem; padding: 7px 0; border-bottom: 1px dashed var(--border); }
+    .services li small { color: var(--muted); display: block; font-size: 0.7rem; }
+    .price { color: var(--green); font-weight: 600; white-space: nowrap; }
+
+    /* Copilot — comunicação */
+    .bubble { background: #075e54; color: #e9f5ef; padding: 12px 14px; border-radius: 12px 12px 12px 2px; font-size: 0.86rem; line-height: 1.45; white-space: pre-wrap; max-width: 560px; }
+    .bubble em { opacity: .75; font-size: 0.72rem; }
+    pre.briefing { font-family: Consolas, 'Courier New', monospace; font-size: 0.74rem; white-space: pre-wrap; color: var(--text); background: #0d1117; padding: 12px; border-radius: 8px; border: 1px solid var(--border); max-height: 280px; overflow: auto; line-height: 1.45; }
+    .meta { font-size: 0.72rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+    button { background: #21262d; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); color: #0d1117; border-color: var(--accent); font-weight: 700; }
+    button.ok { background: var(--green); color: #0d1117; border-color: var(--green); font-weight: 700; }
+    button:disabled { opacity: .45; cursor: default; }
+    select { background: #21262d; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+    .tutor-box { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin-top: 10px; }
+
+    /* Triagem */
+    table.triage { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .triage th, .triage td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    .triage th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .5px; }
+    .triage tr.sel { background: rgba(0,180,255,.07); }
+    .triage tbody tr:hover { cursor: pointer; background: rgba(255,255,255,.03); }
+    .triage .score { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #161b22; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; font-size: 0.8rem; display: none; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 10; }
+    #toast.error { border-color: var(--red); }
+    .empty { color: var(--muted); font-size: 0.8rem; }
+
+    footer { text-align: center; padding: 16px; font-size: 0.72rem; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="font-size:1.6rem">🐾</div>
+  <div>
+    <h1>CLYVO VET — Pet Health Dashboard + CLYVO Copilot</h1>
+    <span class="sub">FIAP 2026 · Disruptive Architectures: IoT, IoB &amp; IA Generativa · Sprint 3</span>
+  </div>
+  <div class="header-right">
+    <span class="badge" id="llm-badge" title="Camada C5 — IA Generativa">LLM: …</span>
+    <span class="badge" id="model-badge" title="Camada C2 — modelo preditivo">Modelo: …</span>
+    <div id="status-dot" title="Status da conexão SSE"></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Pet Info -->
+  <div class="pet-info">
+    <div class="pet-avatar" id="pet-avatar">🐕</div>
+    <div class="pet-details">
+      <h3 id="pet-name">–</h3>
+      <p id="pet-species">Aguardando telemetria…</p>
+      <p id="pet-tutor"></p>
+    </div>
+    <span id="last-update">Aguardando dados...</span>
+  </div>
+
+  <!-- Métricas (Sprint 2 + atividade) -->
+  <div class="metrics">
+    <div class="card" id="card-temp">
+      <div class="card-icon">🌡️</div>
+      <div class="card-label">Temperatura</div>
+      <div class="card-value" id="val-temp">–</div>
+      <div class="card-unit">°C</div>
+      <div class="card-base" id="base-temp"></div>
+    </div>
+    <div class="card" id="card-hr">
+      <div class="card-icon">❤️</div>
+      <div class="card-label">Freq. Cardíaca</div>
+      <div class="card-value" id="val-hr">–</div>
+      <div class="card-unit">bpm</div>
+      <div class="card-base" id="base-hr"></div>
+    </div>
+    <div class="card" id="card-spo2">
+      <div class="card-icon">💧</div>
+      <div class="card-label">SpO₂</div>
+      <div class="card-value" id="val-spo2">–</div>
+      <div class="card-unit">%</div>
+      <div class="card-base" id="base-spo2"></div>
+    </div>
+    <div class="card" id="card-act">
+      <div class="card-icon">🏃</div>
+      <div class="card-label">Atividade</div>
+      <div class="card-value" id="val-act">–</div>
+      <div class="card-unit">índice 0–1 (MPU6050 + visão)</div>
+      <div class="card-base" id="base-act"></div>
+    </div>
+    <div class="card" id="card-hum">
+      <div class="card-icon">🌫️</div>
+      <div class="card-label">Umidade Amb.</div>
+      <div class="card-value" id="val-hum">–</div>
+      <div class="card-unit">%</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-section">
+    <h2>Histórico — Temperatura (°C), FC (bpm) e Atividade</h2>
+    <canvas id="chart" height="80"></canvas>
+  </div>
+
+  <!-- ══════════ CLYVO COPILOT ══════════ -->
+  <div class="grid-2">
+    <div class="panel">
+      <h2>🧠 CLYVO Copilot — Risco <span class="badge" id="risk-mode">—</span></h2>
+      <div class="risk-head">
+        <div class="risk-score" id="risk-score">–<small>/100</small></div>
+        <span class="level" id="risk-level">sem análise</span>
+        <span class="badge" id="risk-ts"></span>
+      </div>
+      <div class="kv"><span>P(atenção veterinária em 7 dias) — RandomForest</span><b id="risk-prob">–</b></div>
+      <div class="bar"><span id="bar-prob" style="width:0%"></span></div>
+      <div class="kv"><span>Anomalia vs. baseline individual — IsolationForest</span><b id="risk-anom">–</b></div>
+      <div class="bar anom"><span id="bar-anom" style="width:0%"></span></div>
+      <h2 style="margin-top:18px">Fatores que mais pesaram</h2>
+      <ul class="plain factors" id="factors"><li class="empty">Aguardando análise…</li></ul>
+      <div class="toolbar">
+        <select id="llm-select" title="Modo do LLM para esta análise">
+          <option value="">LLM: automático (Claude se houver chave)</option>
+          <option value="offline">LLM: template offline</option>
+        </select>
+        <button class="primary" id="btn-analyze" onclick="analyzeNow()">Analisar agora</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📋 Próximas ações <span class="badge">regras + modelo</span></h2>
+      <ul class="plain actions" id="actions"><li class="empty">Aguardando análise…</li></ul>
+      <h2 style="margin-top:18px">🛒 Serviços sugeridos <span class="badge">recomendador</span></h2>
+      <ul class="plain services" id="services"><li class="empty">—</li></ul>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h2>💬 Mensagem ao tutor <span class="badge" id="msg-mode">—</span></h2>
+      <div class="bubble" id="tutor-message">Aguardando análise…</div>
+      <div class="tutor-box" id="tutor-profile"></div>
+      <div class="toolbar">
+        <button class="ok" id="btn-approve" onclick="approve()" disabled>✔ Aprovar e enviar (veterinário)</button>
+        <span class="badge" id="approve-state"></span>
+      </div>
+      <div class="toolbar" title="IoB — simula a reação do tutor à mensagem">
+        <span class="badge">IoB · simular tutor:</span>
+        <button onclick="iob('opened')">abriu</button>
+        <button onclick="iob('replied')">respondeu</button>
+        <button onclick="iob('appointment_booked')">agendou</button>
+        <button onclick="iob('no_show')">faltou</button>
+      </div>
+      <div class="meta" id="msg-meta"></div>
+    </div>
+
+    <div class="panel">
+      <h2>🩺 Briefing para o veterinário</h2>
+      <pre class="briefing" id="vet-briefing">Aguardando análise…</pre>
+      <div class="meta" id="guardrail-meta"></div>
+    </div>
+  </div>
+
+  <!-- Triagem -->
+  <div class="panel">
+    <h2>🗂️ Fila de triagem da clínica <span class="badge">todos os pets · ordenados por risco</span></h2>
+    <div style="overflow-x:auto">
+      <table class="triage">
+        <thead><tr><th>Pet</th><th>Tutor</th><th>Risco</th><th>Próxima ação</th><th>LLM</th><th>Status</th><th></th></tr></thead>
+        <tbody id="triage-body"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Alertas (Sprint 2) -->
+  <div class="alerts-section">
+    <h2>Log de alertas — limites absolutos (Sprint 2)</h2>
+    <ul id="alert-list"><li class="ok">Sem alertas registrados.</li></ul>
+  </div>
+
+</main>
+
+<footer>CLYVO VET · FIAP Challenge 2026 · Sprint 3 · IoT, IoB &amp; IA Generativa — CLYVO Copilot</footer>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+  // ── Estado ────────────────────────────────────────────────────────────────
+  let currentPet = null;       // {id, name, species}
+  let currentInsight = null;
+  const $ = (id) => document.getElementById(id);
+
+  // ── Gráfico ───────────────────────────────────────────────────────────────
+  const MAX_POINTS = 40;
+  const labels = [], tempData = [], hrData = [], actData = [];
+  const chart = new Chart($('chart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Temperatura (°C)', data: tempData, borderColor: '#00b4ff', backgroundColor: 'rgba(0,180,255,0.07)', tension: 0.4, pointRadius: 2, yAxisID: 'yTemp' },
+      { label: 'Freq. Cardíaca (bpm)', data: hrData, borderColor: '#f85149', backgroundColor: 'rgba(248,81,73,0.07)', tension: 0.4, pointRadius: 2, yAxisID: 'yHR' },
+      { label: 'Atividade (0–1)', data: actData, borderColor: '#3fb950', borderDash: [4, 4], tension: 0.4, pointRadius: 0, yAxisID: 'yAct' },
+    ]},
+    options: {
+      animation: false,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+      scales: {
+        x:     { ticks: { color: '#8b949e', font: { size: 10 }, maxTicksLimit: 8 }, grid: { color: '#21262d' } },
+        yTemp: { position: 'left',  ticks: { color: '#00b4ff', font: { size: 10 } }, grid: { color: '#21262d' } },
+        yHR:   { position: 'right', ticks: { color: '#f85149', font: { size: 10 } }, grid: { drawOnChartArea: false } },
+        yAct:  { position: 'right', min: 0, max: 1, display: false },
+      }
+    }
+  });
+  function pushPoint(ts, temp, hr, act) {
+    labels.push(ts.slice(11, 19)); tempData.push(temp); hrData.push(hr); actData.push(act ?? null);
+    if (labels.length > MAX_POINTS) { labels.shift(); tempData.shift(); hrData.shift(); actData.shift(); }
+    chart.update('none');
+  }
+  function resetChart() { labels.length = tempData.length = hrData.length = actData.length = 0; chart.update('none'); }
+
+  // ── Alertas (Sprint 2) ────────────────────────────────────────────────────
+  const alertLog = [];
+  function addAlert(msg, isOk = false) {
+    if (isOk && alertLog.length && alertLog[0].isOk) return;      // não repete "normal"
+    alertLog.unshift({ msg, isOk, ts: new Date().toLocaleTimeString('pt-BR') });
+    const ul = $('alert-list'); ul.innerHTML = '';
+    alertLog.slice(0, 8).forEach(({ msg, isOk, ts }) => {
+      const li = document.createElement('li'); li.className = isOk ? 'ok' : ''; li.textContent = `[${ts}] ${msg}`; ul.appendChild(li);
+    });
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, level = 'ok') {
+    const t = $('toast'); t.textContent = msg; t.className = level === 'error' ? 'error' : ''; t.style.display = 'block';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', 4500);
+  }
+
+  // ── Telemetria ────────────────────────────────────────────────────────────
+  const normalRanges = { dog: { temp: [37.5, 39.2], hr: [60, 140] }, cat: { temp: [37.8, 39.2], hr: [120, 220] } };
+  function toggleAlert(cardId, isAlert) { $(cardId).classList.toggle('alert', !!isAlert); }
+
+  function updateUI(d, quiet = false) {
+    $('last-update').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR') +
+      (d.scenario && d.scenario !== 'normal' ? ` · cenário ${d.scenario} ${d.drift_pct ?? 0}%` : '');
+    $('val-temp').textContent = d.temperature_c ?? '–';
+    $('val-hr').textContent   = d.heart_rate_bpm ?? '–';
+    $('val-spo2').textContent = d.spo2_pct ?? '–';
+    $('val-hum').textContent  = d.humidity_pct ?? '–';
+    if (d.activity_score != null) $('val-act').textContent = Number(d.activity_score).toFixed(2);
+    const r = normalRanges[d.species] || normalRanges.dog;
+    toggleAlert('card-temp', d.temperature_c < r.temp[0] || d.temperature_c > r.temp[1]);
+    toggleAlert('card-hr',   d.heart_rate_bpm < r.hr[0]  || d.heart_rate_bpm  > r.hr[1]);
+    toggleAlert('card-spo2', d.spo2_pct < 95);
+    if (d.timestamp) pushPoint(d.timestamp, d.temperature_c, d.heart_rate_bpm, d.activity_score);
+    if (quiet) return;
+    if (d.alerts && d.alerts.length) d.alerts.forEach(a => addAlert(a));
+    else addAlert('Sinais dentro dos limites absolutos — ' + (d.pet_name || ''), true);
+  }
+
+  // ── Pet selecionado ───────────────────────────────────────────────────────
+  async function selectPet(pet, loadHistory = true) {
+    currentPet = pet;
+    $('pet-name').textContent = pet.name;
+    $('pet-species').textContent = 'Espécie: ' + (pet.species === 'cat' ? 'Gato' : 'Cão');
+    $('pet-avatar').textContent = pet.species === 'cat' ? '🐈' : '🐕';
+    document.querySelectorAll('.triage tbody tr').forEach(tr => tr.classList.toggle('sel', Number(tr.dataset.pet) === pet.id));
+    try {
+      const det = await (await fetch(`/api/pets/${pet.id}`)).json();
+      const p = det.pet;
+      $('pet-tutor').textContent = `Tutor: ${p.tutor_name} · ${p.breed || ''} · ${p.weight_kg} kg · canal ${p.preferred_channel} ~${String(p.preferred_hour).padStart(2, '0')}h · ${det.readings_count} leituras`;
+      const b = await (await fetch(`/api/pets/${pet.id}/baseline`)).json();
+      const src = (k) => b.baseline_source[k] === 'individual' ? 'baseline individual' : b.baseline_source[k] === 'blended' ? 'baseline misto' : 'prior da espécie';
+      $('base-temp').textContent = `${src('temp')}: ${b.baseline.temp.mean} ± ${b.baseline.temp.std}`;
+      $('base-hr').textContent   = `${src('hr')}: ${b.baseline.hr.mean} ± ${b.baseline.hr.std}`;
+      $('base-spo2').textContent = `${src('spo2')}: ${b.baseline.spo2.mean} ± ${b.baseline.spo2.std}`;
+      $('base-act').textContent  = `${src('act')}: ${b.baseline.act.mean} ± ${b.baseline.act.std}`;
+    } catch (e) {}
+    if (loadHistory) {
+      resetChart();
+      try { (await (await fetch(`/api/history?pet_id=${pet.id}&limit=40`)).json()).forEach(r => updateUI(r, true)); } catch (e) {}
+    }
+    loadInsight(pet.id);
+  }
+
+  // ── Copilot: renderização ─────────────────────────────────────────────────
+  const levelClass = (lvl) => (lvl || '').toLowerCase().replace('í', 'i').replace('crítico', 'critico');
+  const pClass = (p) => 'p' + Math.min(4, Math.max(1, p || 4));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function normalizeInsight(ins) {
+    const risk = ins.risk || { risk_score: ins.risk_score, risk_level: ins.risk_level, anomaly_score: ins.anomaly_score,
+                               prob_attention_7d: ins.prob_attention_7d, top_factors: ins.top_factors || [], mode: ins.features?.mode };
+    return { ...ins, risk, tutor_profile: ins.tutor_profile || ins.features?.tutor_profile || null };
+  }
+
+  function renderInsight(raw) {
+    if (!raw || (!raw.id && !raw.risk && raw.risk_score == null)) return;
+    const ins = normalizeInsight(raw); currentInsight = ins;
+    const r = ins.risk;
+    $('risk-score').innerHTML = `${r.risk_score ?? '–'}<small>/100</small>`;
+    const lv = $('risk-level'); lv.textContent = r.risk_level || '—'; lv.className = 'level ' + levelClass(r.risk_level);
+    $('risk-mode').textContent = r.mode === 'model' ? 'IsolationForest + RandomForest' : r.mode === 'heuristic' ? 'heurística (modelo não treinado)' : 'modelo';
+    $('risk-ts').textContent = ins.ts ? new Date(ins.ts).toLocaleString('pt-BR') : '';
+    $('risk-prob').textContent = r.prob_attention_7d != null ? (r.prob_attention_7d * 100).toFixed(0) + '%' : '–';
+    $('bar-prob').style.width = ((r.prob_attention_7d || 0) * 100) + '%';
+    $('risk-anom').textContent = r.anomaly_score != null ? r.anomaly_score.toFixed(2) : '–';
+    $('bar-anom').style.width = ((r.anomaly_score || 0) * 100) + '%';
+
+    const f = $('factors'); f.innerHTML = '';
+    (r.top_factors || []).forEach(x => f.insertAdjacentHTML('beforeend', `<li><span>${esc(x.label)}</span><b>${esc(x.value_text)}</b></li>`));
+    if (!f.children.length) f.innerHTML = '<li class="empty">Nenhum fator relevante — dentro do padrão individual.</li>';
+
+    const a = $('actions'); a.innerHTML = '';
+    (ins.actions || []).forEach(x => a.insertAdjacentHTML('beforeend',
+      `<li class="${pClass(x.priority)}"><span class="chip ${pClass(x.priority)}">${esc(x.priority_label)}</span><span class="chip src">${esc(x.source)}</span>${esc(x.title)}<small>${esc(x.reason)}${x.due_date ? ' · até ' + x.due_date.split('-').reverse().join('/') : ''}</small></li>`));
+    if (!a.children.length) a.innerHTML = '<li class="empty">Nenhuma ação pendente — protocolo em dia.</li>';
+
+    const s = $('services'); s.innerHTML = '';
+    (ins.services || []).forEach(x => s.insertAdjacentHTML('beforeend',
+      `<li><div>${esc(x.name)}<small>${esc((x.why || []).join(' · '))} · afinidade ${x.score}</small></div><span class="price">${x.price_brl ? 'R$ ' + x.price_brl : 'incluso'}</span></li>`));
+    if (!s.children.length) s.innerHTML = '<li class="empty">—</li>';
+
+    $('tutor-message').innerHTML = esc(ins.tutor_message).replace(/_([^_]+)_$/, '<em>$1</em>');
+    const mm = $('msg-mode'); mm.textContent = ins.llm_mode === 'claude' ? `Claude · ${ins.llm_model || ''}` : 'template offline'; mm.className = 'badge ' + (ins.llm_mode === 'claude' ? 'claude' : '');
+    const tp = ins.tutor_profile;
+    $('tutor-profile').innerHTML = tp ? `<b>IoB · perfil do tutor:</b> engajamento <b>${esc(tp.engagement)}</b> (${tp.engagement_score}) · abre ${tp.open_rate != null ? Math.round(tp.open_rate * 100) + '%' : '—'} · responde ${tp.reply_rate != null ? Math.round(tp.reply_rate * 100) + '%' : '—'} · faltas ${tp.no_show_rate != null ? Math.round(tp.no_show_rate * 100) + '%' : '—'}<br>Tom: ${esc(tp.tone_hint)}<br>${(tp.nudges || []).map(esc).join(' · ')}` : '';
+    $('msg-meta').innerHTML = (ins.rag_sources && ins.rag_sources.length ? `RAG: ${ins.rag_sources.map(esc).join(' · ')}<br>` : '') + (ins.llm_error ? `⚠ ${esc(ins.llm_error)}` : '');
+
+    $('vet-briefing').textContent = ins.vet_briefing || '—';
+    const g = ins.guardrail || {};
+    $('guardrail-meta').textContent = g.blocked ? `⚠ Guardrail bloqueou a saída do LLM (${(g.tutor?.violations || []).join(', ')}) — template usado.` :
+      (g.tutor ? `Guardrails: mensagem ${g.tutor.ok ? 'aprovada' : 'com violações'} · briefing ${g.vet?.ok ? 'aprovado' : 'com violações'} · disclaimer CFMV aplicado.` : '');
+
+    const approved = !!ins.approved;
+    $('btn-approve').disabled = approved || !ins.id;
+    $('approve-state').textContent = approved ? `enviada em ${ins.sent_at ? new Date(ins.sent_at).toLocaleString('pt-BR') : ''}` : 'aguardando aprovação do veterinário';
+    $('approve-state').className = 'badge ' + (approved ? 'ok' : 'warn');
+  }
+
+  async function loadInsight(petId) {
+    try { const ins = await (await fetch(`/api/insights/latest?pet_id=${petId}`)).json(); if (ins && ins.id) renderInsight(ins); }
+    catch (e) {}
+  }
+
+  async function analyzeNow() {
+    if (!currentPet) return;
+    const btn = $('btn-analyze'); btn.disabled = true; btn.textContent = 'Analisando…';
+    try {
+      const res = await fetch(`/api/analyze/${currentPet.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ llm_mode: $('llm-select').value || null }) });
+      const ins = await res.json();
+      if (res.ok) { renderInsight(ins); loadTriage(); } else toast(ins.error || 'falha', 'error');
+    } catch (e) { toast('Erro ao analisar', 'error'); }
+    btn.disabled = false; btn.textContent = 'Analisar agora';
+  }
+
+  async function approve() {
+    if (!currentInsight?.id) return;
+    const res = await fetch(`/api/insights/${currentInsight.id}/approve`, { method: 'POST' });
+    if (res.ok) { renderInsight(await res.json()); loadTriage(); }
+  }
+
+  async function iob(eventType) {
+    if (!currentPet) return;
+    await fetch('/api/tutor-events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pet_id: currentPet.id, event_type: eventType }) });
+  }
+
+  // ── Triagem ───────────────────────────────────────────────────────────────
+  async function loadTriage() {
+    try {
+      const rows = await (await fetch('/api/triage')).json();
+      const tb = $('triage-body'); tb.innerHTML = '';
+      rows.forEach(x => tb.insertAdjacentHTML('beforeend', `
+        <tr data-pet="${x.pet_id}" class="${currentPet && currentPet.id === x.pet_id ? 'sel' : ''}" onclick="selectPet({id:${x.pet_id},name:'${esc(x.pet_name)}',species:'${x.species}'})">
+          <td>${x.species === 'cat' ? '🐈' : '🐕'} <b>${esc(x.pet_name)}</b></td>
+          <td>${esc(x.tutor_name)}</td>
+          <td><span class="score">${x.risk_score}</span> <span class="level ${levelClass(x.risk_level)}">${esc(x.risk_level)}</span></td>
+          <td>${x.top_action ? `<span class="chip ${pClass({Urgente:1,Alta:2,Média:3,Rotina:4}[x.top_priority])}">${esc(x.top_priority)}</span>${esc(x.top_action)}` : '<span class="empty">em dia</span>'}${x.n_actions > 1 ? ` <span class="badge">+${x.n_actions - 1}</span>` : ''}</td>
+          <td><span class="badge ${x.llm_mode === 'claude' ? 'claude' : ''}">${x.llm_mode === 'claude' ? 'Claude' : 'template'}</span></td>
+          <td>${x.approved ? '<span class="badge ok">enviada</span>' : '<span class="badge warn">pendente</span>'}</td>
+          <td><button onclick="event.stopPropagation(); reanalyze(${x.pet_id})">↻</button></td>
+        </tr>`));
+      if (!rows.length) tb.innerHTML = '<tr><td colspan="7" class="empty">Nenhuma análise ainda — a primeira triagem roda em background ao iniciar o servidor.</td></tr>';
+    } catch (e) {}
+  }
+  async function reanalyze(petId) {
+    const res = await fetch(`/api/analyze/${petId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ llm_mode: $('llm-select').value || null }) });
+    if (res.ok) { const ins = await res.json(); if (currentPet && currentPet.id === petId) renderInsight(ins); loadTriage(); }
+  }
+
+  // ── SSE ───────────────────────────────────────────────────────────────────
+  const dot = $('status-dot');
+  function connect() {
+    const es = new EventSource('/stream');
+    es.onopen = () => dot.classList.add('online');
+    es.onerror = () => { dot.classList.remove('online'); es.close(); setTimeout(connect, 4000); };
+    es.onmessage = (e) => {
+      const d = JSON.parse(e.data);
+      if (d.type === 'insight') {
+        if (currentPet && d.pet_id === currentPet.id) renderInsight(d);
+        loadTriage();
+        toast(`Copilot: ${d.pet_name} → ${d.risk.risk_level} (${d.risk.risk_score}) · ${d.llm_mode}`);
+        return;
+      }
+      if (d.type === 'status') { toast(d.message, d.level); if (d.level === 'ok') { loadTriage(); if (currentPet) loadInsight(currentPet.id); } return; }
+      if (d.type === 'activity') { if (currentPet && d.pet_id === currentPet.id) $('val-act').textContent = Number(d.activity_score).toFixed(2); return; }
+      if (!currentPet) selectPet({ id: d.pet_id, name: d.pet_name, species: d.species }, false);
+      if (currentPet && d.pet_id !== currentPet.id) return;
+      updateUI(d);
+    };
+  }
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  (async () => {
+    try {
+      const h = await (await fetch('/api/health')).json();
+      const lb = $('llm-badge'); lb.textContent = h.llm_credentials && h.llm_mode !== 'offline' ? `LLM: Claude · ${h.llm_model}` : 'LLM: template (offline)'; lb.className = 'badge ' + (h.llm_credentials && h.llm_mode !== 'offline' ? 'claude' : '');
+    } catch (e) {}
+    try {
+      const m = await (await fetch('/api/model/metrics')).json();
+      if (m.random_forest) { $('model-badge').textContent = `RF AUC ${m.random_forest.roc_auc} · F1 ${m.random_forest.f1} · IF AUC ${m.isolation_forest.roc_auc_as_detector}`; $('model-badge').className = 'badge ok'; }
+    } catch (e) {}
+    await loadTriage();
+    if (!currentPet) {
+      try {
+        const pets = await (await fetch('/api/pets')).json();
+        const thor = pets.find(p => p.name === 'Thor') || pets[0];
+        if (thor) await selectPet({ id: thor.id, name: thor.name, species: thor.species });
+      } catch (e) {}
+    }
+    connect();
+  })();
+</script>
+</body>
+</html>

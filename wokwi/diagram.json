@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "author": "CLYVO VET - FIAP 2026",
+  "editor": {
+    "welcome": "CLYVO VET IoT Simulation - Wokwi"
+  },
+  "parts": [
+    {
+      "id": "esp32",
+      "type": "wokwi-esp32-devkit-v1",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "id": "dht22",
+      "type": "wokwi-dht22",
+      "top": -80,
+      "left": 200,
+      "attrs": {}
+    },
+    {
+      "id": "lcd1",
+      "type": "wokwi-lcd1602",
+      "top": 100,
+      "left": 200,
+      "attrs": {
+        "pins": "i2c"
+      }
+    },
+    {
+      "id": "heartled",
+      "type": "wokwi-led",
+      "top": -80,
+      "left": 350,
+      "attrs": {
+        "color": "red",
+        "label": "Batimentos"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "top": -50,
+      "left": 350,
+      "attrs": { "value": "220" }
+    },
+    {
+      "id": "buzzer1",
+      "type": "wokwi-buzzer",
+      "top": 200,
+      "left": 350,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    ["esp32:D4",    "dht22:SDA",    "green", []],
+    ["esp32:3V3",   "dht22:VCC",    "red",   []],
+    ["esp32:GND.1", "dht22:GND",    "black", []],
+
+    ["esp32:D21",   "lcd1:SDA",     "blue",  []],
+    ["esp32:D22",   "lcd1:SCL",     "yellow",[]],
+    ["esp32:3V3",   "lcd1:VCC",     "red",   []],
+    ["esp32:GND.1", "lcd1:GND",     "black", []],
+
+    ["esp32:D2",    "r1:1",         "orange",[]],
+    ["r1:2",        "heartled:A",   "orange",[]],
+    ["heartled:C",  "esp32:GND.2",  "black", []],
+
+    ["esp32:D5",    "buzzer1:1",    "purple",[]],
+    ["buzzer1:2",   "esp32:GND.3",  "black", []]
+  ]
+}
