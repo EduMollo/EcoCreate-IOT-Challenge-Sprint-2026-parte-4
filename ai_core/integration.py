@@ -46,14 +46,14 @@ def analyze(p):
     readings = p.get('readings', [])
     warnings = []
     if any(m.get('doses_expected', 0) == 0 for m in p.get('medications', [])):
-        warnings.append('Adesao medicamentosa nao medida: confirma�ao de doses indispon�vel no cadastro atual.')
+        warnings.append('Adesão medicamentosa não medida: confirmação de doses indisponível no cadastro atual.')
     if readings:
         latest_ts = datetime.fromisoformat(readings[-1]['ts'].replace('Z', '+00:00'))
         if (datetime.now(timezone.utc) - latest_ts).total_seconds() > 86400:
-            warnings.append('Telemetria desatualizada: exclu�da da an�lise atual.')
+            warnings.append('Telemetria desatualizada: excluída da análise atual.')
             readings = []
     if len(readings) < 25:
-        warnings.append('Hist�rico insuficiente para baseline individual completo.')
+        warnings.append('Histórico insuficiente para baseline individual completo.')
     tel = F.telemetry_features(readings, pet['species'])
     vaccines, consultations, medications = (p.get(k, []) for k in ('vaccines', 'consultations', 'medications'))
     clin = F.clinical_features(pet, vaccines, consultations, medications, today)
@@ -64,14 +64,14 @@ def analyze(p):
     risk = model.predict(feats)
     actions = rules.evaluate(pet, vaccines, consultations, medications,
                              readings[-1] if readings else None, feats, today)
-    if risk['risk_level'] in ('Alto', 'Cr�tico') and not any(a['priority'] <= 2 for a in actions):
+    if risk['risk_level'] in ('Alto', 'Crítico') and not any(a['priority'] <= 2 for a in actions):
         actions.append(_model_action(risk, today))
     actions.sort(key=lambda a: (a['priority'], a['due_date'] or '9999'))
     priority = min((a['priority'] for a in actions), default=4)
     profile = iob.tutor_profile(pet, p.get('events', []))
     services = recommender.recommend(pet, feats, risk, actions, profile)
     ctx = build_context(pet, feats, tel, risk, actions, services, profile, clin, today)
-    # A demonstra�ao do Gateway usa somente cadastros e leituras sint�ticos.
+    # A demonstração do Gateway usa somente cadastros e leituras sintéticos.
     demo = p.get('simulated') is True and pet['name'].startswith('[DEMO] ')
     gen = llm.generate(ctx, get_kb(), allow_gateway=demo)
     checks = {'tutor': guardrails.validate_tutor_message(gen['tutor_message'], pet['name']),
@@ -81,18 +81,18 @@ def analyze(p):
         # Compact fallback avoids repeating a rejected or overlong clinical reason.
         fallback = {'tutor_message': (
             f"Tutor, os dados de {pet['name']} foram analisados pelo CLYVO Copilot. "
-            + ('Entre em contato com a cl�nica agora para orienta�ao da equipe veterin�ria.' if priority == 1
-               else 'Entre em contato com a cl�nica para revisar o acompanhamento e agendar a pr�xima avalia�ao.')),
+            + ('Entre em contato com a clínica agora para orientação da equipe veterinária.' if priority == 1
+               else 'Entre em contato com a clínica para revisar o acompanhamento e agendar a próxima avaliação.')),
             'vet_briefing': f"Pet: {pet['name']}. Score experimental: {risk['risk_score']}/100. "
-                            f"Prioridade: {priority}. Revisar dados e a�oes estruturadas antes de orientar o tutor."}
+                            f"Prioridade: {priority}. Revisar dados e ações estruturadas antes de orientar o tutor."}
         gen.update(tutor_message=fallback['tutor_message'], vet_briefing=fallback['vet_briefing'],
-                   mode='template', error='Texto substitu�do ap�s valida�ao de conte�do.')
+                   mode='template', error='Texto substituído após validação de conteúdo.')
         checks['final_tutor'] = guardrails.validate_tutor_message(gen['tutor_message'], pet['name'])
         checks['final_vet'] = guardrails.validate_vet_briefing(gen['vet_briefing'])
         if not checks['final_tutor']['ok'] or not checks['final_vet']['ok']:
             raise ValueError('Unable to produce valid draft')
     return dict(pet_id=pet.get('id'), pet_name=pet['name'], ts=datetime.now(timezone.utc).isoformat(),
-                risk=risk, priority=priority, priority_label={1:'Urgente',2:'Alta',3:'M�dia',4:'Rotina'}[priority],
+                risk=risk, priority=priority, priority_label={1:'Urgente',2:'Alta',3:'Média',4:'Rotina'}[priority],
                 actions=actions, services=services, tutor_profile=profile,
                 tutor_message=guardrails.with_disclaimer(gen['tutor_message']), vet_briefing=gen['vet_briefing'],
                 llm_mode=gen['mode'], llm_model=gen.get('model'), llm_error=gen.get('error'),
