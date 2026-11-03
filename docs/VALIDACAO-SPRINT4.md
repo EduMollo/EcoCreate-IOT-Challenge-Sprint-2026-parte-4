@@ -12,6 +12,12 @@ Build Python: https://vercel.com/tempests-projects-77349f79/clyvovet-copilot/C2z
 
 Build Java: https://vercel.com/tempests-projects-77349f79/clyvovet/5h4oivYhDxPxubSVkpv1jiqgQzby
 
+## Verificação do provedor generativo em QA
+
+O commit `a61248779197e1e6e372f69d007234875bb5e165` executou 14 testes na Vercel. Os 13 testes da suíte existente passaram. A chamada adicional ao AI Gateway via OIDC usou um pet fictício criado na própria fixture e recebeu HTTP 403. O portal publicado continua com a redação por template e com a jornada de análise, aprovação e leitura validada. A geração por provedor externo segue pendente.
+
+Build de QA: https://vercel.com/tempests-projects-77349f79/clyvovet-copilot/xgP3HQmgBgdmwQ6aUgFpeFtucxon
+
 ## Evidências históricas de 01/11/2026
 
 
