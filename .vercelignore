@@ -6,7 +6,6 @@ clyvo.db*
 notebooks
 docs
 wokwi
-tests
 templates
 pet_detection.py
 dashboard_server.py
