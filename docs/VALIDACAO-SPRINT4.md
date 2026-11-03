@@ -1,4 +1,19 @@
-# Validação da implementação — 01/11/2026
+# Validação da implementação
+
+## Fechamento da publicação em 03/11/2026
+
+- API Python publicada em https://clyvovet-copilot.vercel.app. O endpoint `/health` retornou HTTP 200 e versão 4.0.0.
+- O build da API retreinou o modelo e executou 13 testes sem skips. A suíte cobre inferência real no Flask, autenticação, regras de urgência, telemetria antiga e contingência do provedor. O teste de geração usa uma resposta simulada.
+- O RandomForest obteve acurácia 0,876, precisão 0,819, recall 0,809, F1 0,814 e AUC 0,901. São resultados do holdout de dados sintéticos. SHA-256 do CSV versionado: `2b1a0633a5c81d672a28d0f714d99c5d701b4e033ac1725afd7dd2a855389443`.
+- O Java publicado em https://clyvovet.vercel.app foi compilado no commit `d9fc0a77677388a4eec61655d4f55212ce3118ab`. A Vercel registrou `BUILD SUCCESS`, e o Flyway confirmou o schema PostgreSQL `clyvovet` na versão 7. A tela de login respondeu HTTP 200.
+- Os dois serviços receberam configuração de comunicação servidor a servidor. A redação está em modo template. Ainda faltam testar a jornada autenticada no portal e validar um provedor generativo real.
+
+Build Python: https://vercel.com/tempests-projects-77349f79/clyvovet-copilot/C2zDPxTLZmsz8TAmntPfBSmUqADf
+
+Build Java: https://vercel.com/tempests-projects-77349f79/clyvovet/5h4oivYhDxPxubSVkpv1jiqgQzby
+
+## Evidências históricas de 01/11/2026
+
 
 ## Resultados efetivamente obtidos
 
