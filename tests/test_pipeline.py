@@ -62,18 +62,18 @@ class PipelineTests(unittest.TestCase):
         import json
         from unittest.mock import Mock
         response=Mock()
-        response.json.return_value={'response':json.dumps({'tutor_message':'Thor apresenta altera�oes nos sensores. Entre em contato com a cl�nica agora para avalia�ao.',
-            'vet_briefing':'Thor: altera�oes na janela recente. Revisar sinais, prioridade e hist�rico antes de orientar o tutor.'})}
+        response.json.return_value={'response':json.dumps({'tutor_message':'Thor apresenta alterações nos sensores. Entre em contato com a clínica agora para avaliação.',
+            'vet_briefing':'Thor: alterações na janela recente. Revisar sinais, prioridade e histórico antes de orientar o tutor.'})}
         with patch.dict(os.environ,{'CLYVO_LLM_PROVIDER':'ollama'}), patch('requests.post',return_value=response):
             result=self.analyze(self.data('fever'))
         self.assertEqual(result['llm_mode'],'ollama');self.assertTrue(result['rag_used'])
         self.assertTrue(result['rag_sources'])
 
     @unittest.skipUnless(os.getenv('CLYVO_VERIFY_GATEWAY') == '1',
-                         'verifica�ao externa opcional com fixture sint�tica')
+                         'verificação externa opcional com fixture sintética')
     def test_gateway_live_with_synthetic_fixture(self):
         payload = self.data()
-        payload['pet']['name'] = '[DEMO] Pet Sint�tico CI'
+        payload['pet']['name'] = '[DEMO] Pet Sintético CI'
         with patch.dict(os.environ, {'CLYVO_LLM_PROVIDER': 'gateway'}):
             result = self.analyze(payload)
         self.assertEqual(result['llm_mode'], 'gateway', result.get('llm_error'))
