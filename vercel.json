@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "python -m ai_core.risk_model train",
+  "buildCommand": "python -m ai_core.risk_model train && CI=true python -m unittest discover -s tests -v",
   "functions": {
     "app.py": {
       "maxDuration": 60,
