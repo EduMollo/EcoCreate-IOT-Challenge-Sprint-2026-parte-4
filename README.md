@@ -3,9 +3,7 @@
 **Aplicação:** https://clyvovet.vercel.app
 
 **Fontes:** 
-
 [**Github**](https://github.com/EduMollo/EcoCreate-IOT-Challenge-Sprint-2026-parte-4)
-
 [**Video**](https://youtu.be/4kTnQgR9ZAs)
 
 **Acesso a Plataforma**
